@@ -1,12 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"geerpc"
-	"geerpc/codec"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -26,9 +25,9 @@ func main() {
 	go startServer(addr)
 	time.Sleep(time.Second)
 
+	/* Day1 的客户端代码
 	conn, _ := net.Dial("tcp", <-addr)
 	defer func() { _ = conn.Close() }()
-
 	_ = json.NewEncoder(conn).Encode(geerpc.DefaultOption)
 	cc := codec.NewGobCodec(conn)
 	for i := 0; i < 5; i++ {
@@ -41,5 +40,23 @@ func main() {
 		var reply string
 		_ = cc.ReadBody(&reply)
 		log.Println("reply:", reply)
+	} */
+
+	// Day2 的客户端代码
+	client, _ := geerpc.Dial("tcp", <-addr)
+	defer func() { _ = client.Close() }()
+	var wg sync.WaitGroup
+	for i := 0; i < 5; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			args := fmt.Sprintf("geerpc req %d", i)
+			var reply string
+			if err := client.Call("Foo.Sum", args, &reply); err != nil {
+				log.Fatal("call Foo.Sum error:", err)
+			}
+			log.Println("reply:", reply)
+		}(i)
 	}
+	wg.Wait()
 }
