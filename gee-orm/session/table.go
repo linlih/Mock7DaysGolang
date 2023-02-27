@@ -7,9 +7,10 @@ import (
 	"geeorm/dialect"
 	"geeorm/log"
 	"geeorm/schema"
-	_ "github.com/mattn/go-sqlite3"
 	"reflect"
 	"strings"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type Session struct {
@@ -49,18 +50,18 @@ func (s *Session) CreateTable() error {
 		columns = append(columns, fmt.Sprintf("%s %s %s", field.Name, field.Type, field.Tag))
 	}
 	desc := strings.Join(columns, ",")
-	_, err := s.Row(fmt.Sprintf("CREATE TABLE %s (%s);", table.Name, desc)).Exec()
+	_, err := s.Raw(fmt.Sprintf("CREATE TABLE %s (%s);", table.Name, desc)).Exec()
 	return err
 }
 
 func (s *Session) DropTable() error {
-	_, err := s.Row(fmt.Sprintf("Drop TABLE IF EXISTS %s;", s.refTable.Name)).Exec()
+	_, err := s.Raw(fmt.Sprintf("Drop TABLE IF EXISTS %s;", s.refTable.Name)).Exec()
 	return err
 }
 
 func (s *Session) HasTable() bool {
 	sql, values := s.dialect.TableExistSQL(s.RefTable().Name)
-	row := s.Row(sql, values...).QueryRow()
+	row := s.Raw(sql, values...).QueryRow()
 	if row.Err() != nil {
 		log.Error("row :", row.Err())
 		return false
